@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iReady Diagnostic — Region South 2025–26</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#00247a;--orange:#E8671B;--green:#1D9E75;--purple:#7B3F9E;
+  --blue-a:rgba(0,36,122,0.75);--orange-a:rgba(232,103,27,0.75);
+  --green-a:rgba(29,158,117,0.75);--purple-a:rgba(123,63,158,0.75);
+  --g50:#f8f9fb;--g100:#f0f2f6;--g200:#e2e6ed;--g400:#9aa3b2;
+  --g600:#4b5668;--g800:#1e2433;
+  --radius:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --tab-h:52px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--g50);color:var(--g800);min-height:100vh}
+
+/* HEADER */
+header{background:var(--blue);color:#fff;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,36,122,.35)}
+.hdr-title{font-size:14px;font-weight:600;letter-spacing:.01em}
+.hdr-sub{font-size:11px;font-weight:300;opacity:.7;margin-top:2px}
+.hdr-badge{background:var(--orange);color:#fff;font-size:10px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase}
+
+/* TABS */
+.tab-bar{background:#fff;border-bottom:2px solid var(--g200);display:flex;overflow-x:auto;padding:0 1.5rem;scrollbar-width:none;position:sticky;top:60px;z-index:190}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab{padding:0 18px;height:var(--tab-h);display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--g400);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s;user-select:none}
+.tab:hover{color:var(--g600)}
+.tab.active{color:var(--blue);border-color:var(--blue)}
+
+/* SLICER BAR */
+.slicer-bar{background:#fff;border-bottom:1px solid var(--g200);padding:10px 2rem;display:flex;gap:20px;flex-wrap:wrap;align-items:center;position:sticky;top:112px;z-index:180}
+.slicer-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.slicer-label{font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.slicer-divider{width:1px;height:24px;background:var(--g200)}
+.chip{padding:4px 11px;border-radius:20px;border:1.5px solid var(--g200);font-size:11.5px;font-weight:500;cursor:pointer;background:#fff;color:var(--g600);transition:all .12s;white-space:nowrap}
+.chip:hover{border-color:var(--g400);color:var(--g800)}
+.chip.on-subj-math{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.on-subj-ela{background:var(--orange);border-color:var(--orange);color:#fff}
+.chip.on-region{background:var(--green);border-color:var(--green);color:#fff}
+.chip.on-band{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.on-grade{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.on-window{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* CONTENT */
+.pane{display:none;padding:1.75rem 2rem;max-width:1320px;margin:0 auto}
+.pane.active{display:block}
+
+/* SECTION HEADER */
+.sec-title{font-size:20px;font-weight:600;color:var(--blue);margin-bottom:4px}
+.sec-sub{font-size:13px;color:var(--g600);line-height:1.5;margin-bottom:1.25rem}
+
+/* METRIC CARDS */
+.metric-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:#fff;border-radius:var(--radius);padding:14px 16px;border:1px solid var(--g200)}
+.metric-lbl{font-size:10px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.metric-val{font-size:24px;font-weight:600;line-height:1}
+.metric-sub{font-size:11px;color:var(--g400);margin-top:3px}
+.c-blue{color:var(--blue)}.c-green{color:#15803d}.c-orange{color:var(--orange)}.c-red{color:#b91c1c}
+
+/* CHART CARDS */
+.grid{display:grid;gap:16px;margin-bottom:1.5rem}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.card{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--g200)}
+.card-title{font-size:12.5px;font-weight:600;color:var(--g800);margin-bottom:2px}
+.card-sub{font-size:11px;color:var(--g400);margin-bottom:12px}
+.cw{position:relative}
+
+/* INSIGHT */
+.insight{background:#f0f4ff;border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:11px 15px;font-size:12.5px;color:var(--g600);line-height:1.6;margin-bottom:1.25rem}
+.insight strong{color:var(--blue)}
+.insight.warn{background:#fff7ed;border-color:var(--orange)}
+.insight.warn strong{color:var(--orange)}
+
+/* TABLE */
+.tbl-wrap{background:#fff;border-radius:var(--radius);border:1px solid var(--g200);overflow:hidden;margin-bottom:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--blue);color:#fff;padding:9px 13px;text-align:center;font-weight:500;font-size:11px}
+th:first-child{text-align:left}
+td{padding:8px 13px;text-align:center;border-bottom:1px solid var(--g100)}
+td:first-child{text-align:left;font-weight:500}
+tr:nth-child(even) td{background:var(--g50)}
+tr.district-row td{background:#e8eaf6;font-weight:600;color:var(--blue)}
+.tg{color:#15803d;font-weight:600}.tr{color:#b91c1c}.to{color:var(--orange);font-weight:600}
+
+/* EMPTY STATE */
+.empty{padding:40px;text-align:center;color:var(--g400);font-size:13px;font-style:italic}
+
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}.pane{padding:1.25rem 1rem}.slicer-bar{top:112px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div><div class="hdr-title">iReady Diagnostic — Region South</div><div class="hdr-sub">School Year 2025–26 &nbsp;|&nbsp; BOY to MOY Analysis &nbsp;|&nbsp; Grades K–12</div></div>
+  <div class="hdr-badge">Internal</div>
+</header>
+
+<div class="tab-bar">
+  <div class="tab active"  onclick="showPane('overview',this)">Overview</div>
+  <div class="tab" onclick="showPane('balcony',this)">District Balcony</div>
+  <div class="tab" onclick="showPane('accel',this)">Relative Acceleration</div>
+  <div class="tab" onclick="showPane('sba',this)">SBA Grades</div>
+  <div class="tab" onclick="showPane('scatter',this)">Scatter Analysis</div>
+  <div class="tab" onclick="showPane('gradedetail',this)">Grade Detail</div>
+  <div class="tab" onclick="showPane('placement',this)">Placement Tiers</div>
+</div>
+
+<!-- GLOBAL SLICER BAR -->
+<div class="slicer-bar" id="slicerBar">
+  <div class="slicer-group">
+    <span class="slicer-label">Subject</span>
+    <button class="chip on-subj-math" data-dim="subj" data-val="Math" onclick="toggleSlicer(this)">Math</button>
+    <button class="chip on-subj-ela"  data-dim="subj" data-val="ELA"  onclick="toggleSlicer(this)">ELA</button>
+  </div>
+  <div class="slicer-divider"></div>
+  <div class="slicer-group">
+    <span class="slicer-label">Region</span>
+    <button class="chip on-region" data-dim="region" data-val="E" onclick="toggleSlicer(this)">East</button>
+    <button class="chip on-region" data-dim="region" data-val="N" onclick="toggleSlicer(this)">North</button>
+    <button class="chip on-region" data-dim="region" data-val="S" onclick="toggleSlicer(this)">South</button>
+    <button class="chip on-region" data-dim="region" data-val="W" onclick="toggleSlicer(this)">West</button>
+  </div>
+  <div class="slicer-divider"></div>
+  <div class="slicer-group">
+    <span class="slicer-label">Band</span>
+    <button class="chip on-band" data-dim="band" data-val="K-2"  onclick="toggleSlicer(this)">K–2</button>
+    <button class="chip on-band" data-dim="band" data-val="3-5"  onclick="toggleSlicer(this)">3–5</button>
+    <button class="chip on-band" data-dim="band" data-val="6-8"  onclick="toggleSlicer(this)">6–8</button>
+    <button class="chip on-band" data-dim="band" data-val="9-11" onclick="toggleSlicer(this)">9–11</button>
+  </div>
+  <div class="slicer-divider"></div>
+  <div class="slicer-group">
+    <span class="slicer-label">Grade</span>
+    <button class="chip on-grade" data-dim="grade" data-val="K"  onclick="toggleSlicer(this)">K</button>
+    <button class="chip on-grade" data-dim="grade" data-val="1"  onclick="toggleSlicer(this)">1</button>
+    <button class="chip on-grade" data-dim="grade" data-val="2"  onclick="toggleSlicer(this)">2</button>
+    <button class="chip on-grade" data-dim="grade" data-val="3"  onclick="toggleSlicer(this)">3</button>
+    <button class="chip on-grade" data-dim="grade" data-val="4"  onclick="toggleSlicer(this)">4</button>
+    <button class="chip on-grade" data-dim="grade" data-val="5"  onclick="toggleSlicer(this)">5</button>
+    <button class="chip on-grade" data-dim="grade" data-val="6"  onclick="toggleSlicer(this)">6</button>
+    <button class="chip on-grade" data-dim="grade" data-val="7"  onclick="toggleSlicer(this)">7</button>
+    <button class="chip on-grade" data-dim="grade" data-val="8"  onclick="toggleSlicer(this)">8</button>
+    <button class="chip on-grade" data-dim="grade" data-val="9"  onclick="toggleSlicer(this)">9</button>
+    <button class="chip on-grade" data-dim="grade" data-val="10" onclick="toggleSlicer(this)">10</button>
+    <button class="chip on-grade" data-dim="grade" data-val="11" onclick="toggleSlicer(this)">11</button>
+    <button class="chip on-grade" data-dim="grade" data-val="12" onclick="toggleSlicer(this)">12</button>
+  </div>
+  <div class="slicer-divider"></div>
+  <div class="slicer-group">
+    <span class="slicer-label">Window</span>
+    <button class="chip on-window" data-dim="window" data-val="BOY" onclick="toggleSlicer(this)">BOY</button>
+    <button class="chip on-window" data-dim="window" data-val="MOY" onclick="toggleSlicer(this)">MOY</button>
+  </div>
+</div>
+
+<!-- PANES -->
+<div id="pane-overview"    class="pane active"></div>
+<div id="pane-balcony"     class="pane"></div>
+<div id="pane-accel"       class="pane"></div>
+<div id="pane-sba"         class="pane"></div>
+<div id="pane-scatter"     class="pane"></div>
+<div id="pane-gradedetail" class="pane"></div>
+<div id="pane-placement"   class="pane"></div>
+
+<script>
+// ═══════════════════════ DATA ═══════════════════════
+const ALL_GRADES = ['K','1','2','3','4','5','6','7','8','9','10','11','12'];
+const BANDS = ['K-2','3-5','6-8','9-11'];
+const BAND_MAP = {'K':0,'1':0,'2':0,'3':1,'4':1,'5':1,'6':2,'7':2,'8':2,'9':3,'10':3,'11':3,'12':null};
+const RC = {E:'#00247a',N:'#1D9E75',S:'#E8671B',W:'#7B3F9E'};
+const RA = {E:'rgba(0,36,122,.75)',N:'rgba(29,158,117,.75)',S:'rgba(232,103,27,.75)',W:'rgba(123,63,158,.75)'};
+const RL = {E:'East',N:'North',S:'South',W:'West'};
+
+// All placement data — Region South [K..12]
+const SD = {
+  Math:{
+    BOY:{ma:[3.3,1.9,1.2,1.1,3.4,4.5,4.5,4.9,6.0,5.1,3.5,5.7,6.2],eo:[5.1,1.8,3.4,4.7,8.0,11.5,13.5,12.4,10.4,18.5,17.6,7.9,8.5],b1:[91.6,68.1,44.6,40.0,40.3,36.7,30.9,27.4,22.8,9.5,10.6,8.7,8.6],b2:[0,28.3,50.8,30.6,22.5,16.9,15.6,13.8,11.3,11.0,8.9,17.9,3.9],b3:[0,0,0,23.5,25.7,30.5,35.5,41.5,49.5,56.0,59.5,59.8,72.8]},
+    MOY:{ma:[24.3,11.7,8.5,7.3,11.2,13.0,12.6,10.5,13.1,15.0,9.4,14.7,11.8],eo:[18.5,9.1,12.7,16.5,17.9,18.5,18.6,15.8,13.7,24.9,25.6,13.2,13.6],b1:[57.2,68.0,54.1,49.2,40.2,36.2,28.1,26.6,23.6,10.1,11.0,11.0,11.4],b2:[0,11.2,24.8,16.2,17.0,13.4,13.5,12.3,10.5,9.2,8.1,18.5,4.0],b3:[0,0,0,10.8,13.7,18.9,27.2,34.9,39.0,40.9,45.9,42.7,59.3]}
+  },
+  ELA:{
+    BOY:{ma:[4.3,5.3,5.2,6.6,7.1,6.1,10.0,11.9,12.0,8.7,9.2,6.1,3.7],eo:[15.0,5.0,10.3,18.3,8.3,11.1,9.1,12.0,11.2,9.3,9.2,15.0,17.7],b1:[80.7,70.6,38.1,23.9,41.1,24.5,21.0,15.7,16.4,22.5,16.3,15.0,16.5],b2:[0,19.1,46.4,25.7,13.3,29.2,14.6,11.5,6.8,6.9,12.8,7.3,5.2],b3:[0,0,0,25.5,30.2,29.2,45.3,48.9,53.7,52.6,52.4,56.6,56.8]},
+    MOY:{ma:[25.7,20.8,16.6,15.8,14.1,11.6,18.0,18.1,19.9,17.1,17.6,15.1,8.1],eo:[36.2,11.0,19.6,27.3,12.6,16.5,12.0,15.0,14.9,12.8,11.5,20.8,24.3],b1:[38.1,60.7,36.7,23.0,43.2,26.0,22.4,16.5,16.3,23.1,17.0,16.0,17.9],b2:[0,7.5,27.2,18.5,9.9,25.9,12.9,10.5,6.3,6.2,11.7,7.3,4.9],b3:[0,0,0,15.4,20.2,19.9,34.8,39.9,42.6,40.8,42.2,40.7,44.8]}
+  }
+};
+
+// Band data — all regions (MOY prof, growth, accel)
+const BD = {
+  Math:{
+    prof:{E:[29.9,29.5,25.9,27.5],N:[35.9,38.0,37.0,33.3],S:[28.2,28.1,28.1,34.2],W:[45.4,45.0,39.2,34.1],D:[34.9,35.1,32.6,32.3]},
+    growth:{E:[23.4,17.1,9.8,9.4],N:[24.5,18.0,9.8,8.7],S:[22.7,17.0,10.8,14.8],W:[26.4,17.7,9.6,9.7],D:[24.2,17.5,10.0,10.6]},
+    accel:{E:[-0.8,-0.4,-0.2,-1.2],N:[0.2,0.6,-0.2,-1.9],S:[-1.5,-0.4,0.8,4.1],W:[2.2,0.3,-0.5,-1.0]}
+  },
+  ELA:{
+    prof:{E:[45.6,34.4,30.3,26.6],N:[52.6,43.3,41.3,32.7],S:[43.3,32.6,32.6,31.6],W:[58.9,51.3,45.1,36.1],D:[50.1,40.4,37.3,31.8]},
+    growth:{E:[29.1,13.2,8.2,7.4],N:[29.0,12.4,7.5,7.5],S:[28.2,13.4,10.6,12.4],W:[28.9,12.0,7.8,9.2],D:[28.8,12.8,8.5,9.1]},
+    accel:{E:[0.3,0.4,-0.3,-1.8],N:[0.2,-0.4,-1.0,-1.6],S:[-0.6,0.7,2.1,3.3],W:[0.1,-0.7,-0.8,0.1]}
+  }
+};
+
+// SBA grades 3,5,8,11
+const SBA_LABELS = ['Gr 3','Gr 5','Gr 8','Gr 11'];
+const SBAD = {
+  Math:{prof:{E:[26.3,32.2,23.9,18.1],N:[34.3,40.7,35.1,23.8],S:[23.8,31.5,26.8,27.9],W:[40.6,48.4,37.5,22.6]},growth:{E:[19.3,14.8,9.2,8.3],N:[21.1,14.4,10.3,7.8],S:[17.9,15.5,10.4,14.2],W:[21.0,13.7,9.7,7.2]},b3:{E:[9.8,18.1,39.9,52.1],N:[7.5,13.5,31.9,46.7],S:[10.8,18.9,39.0,42.7],W:[6.3,11.3,29.0,47.2]}},
+  ELA:{prof:{E:[45.1,29.4,32.5,28.3],N:[54.4,37.5,43.1,34.0],S:[43.1,28.1,34.7,35.9],W:[59.6,47.3,47.2,35.9]},growth:{E:[17.9,10.2,8.3,8.6],N:[16.2,9.8,8.9,8.2],S:[18.2,10.9,11.6,14.9],W:[14.8,9.6,9.4,8.9]},b3:{E:[13.9,18.2,40.8,46.7],N:[10.4,14.0,33.6,42.8],S:[15.4,19.9,42.6,40.7],W:[9.0,11.0,30.3,41.3]}}
+};
+
+const PROXY = {
+  Math:[31.0,15.1,15.3,17.2,21.0,22.8,22.6,19.0,19.4,28.9,25.3,20.2,18.4],
+  ELA: [44.9,23.0,26.2,31.2,19.3,20.4,21.7,24.0,25.2,21.7,21.0,26.1,23.5]
+};
+
+const MEDIANS = {Math:{x:27.9,y:15.5},ELA:{x:32.4,y:11.6}};
+
+// ═══════════════════════ SLICER STATE ═══════════════════════
+const S = {
+  subj:   new Set(['Math','ELA']),
+  region: new Set(['E','N','S','W']),
+  band:   new Set(['K-2','3-5','6-8','9-11']),
+  grade:  new Set(ALL_GRADES),
+  window: new Set(['BOY','MOY'])
+};
+
+function toggleSlicer(btn) {
+  const dim = btn.dataset.dim;
+  const val = btn.dataset.val;
+  const activeClass = {subj:val==='Math'?'on-subj-math':'on-subj-ela', region:'on-region', band:'on-band', grade:'on-grade', window:'on-window'}[dim];
+  if(S[dim].has(val)) {
+    if(S[dim].size === 1) return; // keep at least one
+    S[dim].delete(val);
+    btn.className = 'chip';
+  } else {
+    S[dim].add(val);
+    btn.className = 'chip ' + activeClass;
+  }
+  // sync band↔grade
+  syncBandGrade(dim, val);
+  render();
+}
+
+function syncBandGrade(dim, val) {
+  if(dim === 'band') {
+    const bandGrades = {'K-2':['K','1','2'],'3-5':['3','4','5'],'6-8':['6','7','8'],'9-11':['9','10','11']};
+    if(!S.band.has(val)) {
+      bandGrades[val].forEach(g => { S.grade.delete(g); refreshChip('grade',g,false); });
+    } else {
+      bandGrades[val].forEach(g => { S.grade.add(g); refreshChip('grade',g,true); });
+    }
+  }
+  if(dim === 'grade') {
+    // update band chips based on whether all grades in band are selected
+    const bandGrades = {'K-2':['K','1','2'],'3-5':['3','4','5'],'6-8':['6','7','8'],'9-11':['9','10','11']};
+    Object.entries(bandGrades).forEach(([band,grades])=>{
+      const allOn = grades.every(g=>S.grade.has(g));
+      if(allOn) { S.band.add(band); refreshChip('band',band,true); }
+      else { S.band.delete(band); refreshChip('band',band,false); }
+    });
+  }
+}
+
+function refreshChip(dim, val, on) {
+  const chip = document.querySelector(`.chip[data-dim="${dim}"][data-val="${val}"]`);
+  if(!chip) return;
+  const cls = {subj:'on-subj-math',region:'on-region',band:'on-band',grade:'on-grade',window:'on-window'}[dim];
+  chip.className = on ? 'chip '+cls : 'chip';
+}
+
+// ═══════════════════════ HELPERS ═══════════════════════
+const CH = {};
+function dc(id) { if(CH[id]) { CH[id].destroy(); delete CH[id]; } }
+
+function filteredGrades() {
+  return ALL_GRADES.filter(g => S.grade.has(g));
+}
+function filteredRegions() {
+  return ['E','N','S','W'].filter(r => S.region.has(r));
+}
+function filteredSubjects() {
+  return ['Math','ELA'].filter(s => S.subj.has(s));
+}
+function filteredBands() {
+  return BANDS.filter(b => S.band.has(b));
+}
+
+function profArr(subj, win, grades) {
+  const d = SD[subj][win];
+  return grades.map(g => { const i = ALL_GRADES.indexOf(g); return +(d.ma[i]+d.eo[i]).toFixed(1); });
+}
+function growthArr(subj, grades) {
+  return grades.map(g => {
+    const i = ALL_GRADES.indexOf(g);
+    return +((SD[subj].MOY.ma[i]+SD[subj].MOY.eo[i])-(SD[subj].BOY.ma[i]+SD[subj].BOY.eo[i])).toFixed(1);
+  });
+}
+
+function mkChart(id, config) {
+  dc(id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  CH[id] = new Chart(ctx, config);
+}
+
+function barCfg(labels, datasets, opts={}) {
+  return { type:'bar', data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},...(opts.plugins||{})},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,...(opts.xtick||{})}},
+              y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{font:{size:10}},...(opts.yscale||{})}},
+      ...opts.extra}};
+}
+
+function noData(el) {
+  const c = document.getElementById(el);
+  if(c) { const parent=c.parentElement; parent.innerHTML='<div class="empty">No data for current selection</div>'; }
+}
+
+// ═══════════════════════ TAB NAVIGATION ═══════════════════════
+let currentPane = 'overview';
+function showPane(name, tab) {
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  if(tab) tab.classList.add('active');
+  currentPane = name;
+  render();
+}
+
+function render() {
+  if(currentPane==='overview')    renderOverview();
+  if(currentPane==='balcony')     renderBalcony();
+  if(currentPane==='accel')       renderAccel();
+  if(currentPane==='sba')         renderSBA();
+  if(currentPane==='scatter')     renderScatter();
+  if(currentPane==='gradedetail') renderGradeDetail();
+  if(currentPane==='placement')   renderPlacement();
+}
+
+// ═══════════════════════ OVERVIEW ═══════════════════════
+function renderOverview() {
+  const el = document.getElementById('pane-overview');
+  const grades = filteredGrades();
+  const regions = filteredRegions();
+  const subjects = filteredSubjects();
+  const windows = Array.from(S.window);
+
+  // Compute aggregated metrics for Region South in filtered selection
+  let totalBOY=0,totalMOY=0,cnt=0;
+  subjects.forEach(s=>{ grades.forEach(g=>{ const i=ALL_GRADES.indexOf(g); totalBOY+=SD[s].BOY.ma[i]+SD[s].BOY.eo[i]; totalMOY+=SD[s].MOY.ma[i]+SD[s].MOY.eo[i]; cnt++; }); });
+  const avgBOY = cnt?+(totalBOY/cnt*100).toFixed(1):0;
+  const avgMOY = cnt?+(totalMOY/cnt*100).toFixed(1):0;
+  const growth = +(avgMOY-avgBOY).toFixed(1);
+
+  el.innerHTML = `
+  <div class="sec-title">Region South — Aggregated Results</div>
+  <div class="sec-sub">Filtered selection: ${subjects.join(', ')} | Grades: ${grades.join(', ')} | Regions shown in charts: ${regions.map(r=>RL[r]).join(', ')}</div>
+  <div class="metric-row">
+    <div class="metric"><div class="metric-lbl">BOY Proficiency (South)</div><div class="metric-val">${avgBOY}%</div><div class="metric-sub">Selected grades & subjects</div></div>
+    <div class="metric"><div class="metric-lbl">MOY Proficiency (South)</div><div class="metric-val c-blue">${avgMOY}%</div><div class="metric-sub">Selected grades & subjects</div></div>
+    <div class="metric"><div class="metric-lbl">Growth</div><div class="metric-val c-green">+${growth} pp</div><div class="metric-sub">BOY → MOY</div></div>
+    <div class="metric"><div class="metric-lbl">District MOY (all)</div><div class="metric-val">35.9%</div><div class="metric-sub">All grades, both subjects</div></div>
+    <div class="metric"><div class="metric-lbl">South Growth Rank</div><div class="metric-val c-orange">#1</div><div class="metric-sub">vs. all regions (overall)</div></div>
+    <div class="metric"><div class="metric-lbl">3+Below Reduction</div><div class="metric-val c-green">−9.4 pp</div><div class="metric-sub">South overall, leads district</div></div>
+  </div>
+  <div class="insight">
+    <strong>Key finding:</strong> Region South leads the district in Growth (+15.8 pp overall) and 3+ Below Reduction (−9.4 pp) despite having the second-lowest MOY Proficiency — consistent with its Priority School concentration. Use the slicers above to filter by grade, subject, or grade band to explore specific cohorts.
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Region</th><th>BOY Prof.</th><th>MOY Prof.</th><th>Growth</th><th>Mid or Above</th><th>Early On</th><th>3+ Below (MOY)</th><th>3+B Reduction</th></tr></thead>
+      <tbody>
+        <tr><td>West</td><td>28.6%</td><td>42.9%</td><td>+14.2 pp</td><td>24.4%</td><td>18.5%</td><td>28.5%</td><td>−6.7 pp</td></tr>
+        <tr><td>North</td><td>24.3%</td><td>38.2%</td><td>+13.9 pp</td><td>19.8%</td><td>18.4%</td><td>30.6%</td><td>−7.0 pp</td></tr>
+        <tr><td class="to">South</td><td>16.2%</td><td>32.1%</td><td class="tg">+15.8 pp ★</td><td>14.7%</td><td>17.4%</td><td>33.7%</td><td class="tg">−9.4 pp ★</td></tr>
+        <tr><td>East</td><td>16.4%</td><td>30.3%</td><td>+13.9 pp</td><td>13.6%</td><td>16.7%</td><td>35.8%</td><td>−4.7 pp</td></tr>
+        <tr class="district-row"><td>District Avg</td><td>21.4%</td><td>35.9%</td><td>+14.5 pp</td><td>18.1%</td><td>17.8%</td><td>32.1%</td><td>−7.0 pp</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="card-title">MOY Proficiency by Region</div><div class="card-sub">All grades & subjects averaged</div><div class="cw" style="height:220px"><canvas id="ovProf"></canvas></div></div>
+    <div class="card"><div class="card-title">Growth by Region</div><div class="card-sub">BOY → MOY pp change</div><div class="cw" style="height:220px"><canvas id="ovGrowth"></canvas></div></div>
+  </div>`;
+
+  const rLabels = regions.map(r=>RL[r]);
+  const moys   = regions.map(r=>({E:42.9,N:38.2,S:32.1,W:30.3}[r]));
+  const growths = regions.map(r=>({E:13.9,N:13.9,S:15.8,W:14.2}[r]));
+  const colors  = regions.map(r=>RA[r]);
+  mkChart('ovProf', barCfg(rLabels,[{data:moys,backgroundColor:colors,borderRadius:4}],{yscale:{ticks:{callback:v=>v+'%'},max:55}}));
+  mkChart('ovGrowth', barCfg(rLabels,[{data:growths,backgroundColor:colors,borderRadius:4}],{yscale:{ticks:{callback:v=>'+'+v+' pp'},min:12,max:17}}));
+}
+
+// ═══════════════════════ BALCONY ═══════════════════════
+function renderBalcony() {
+  const el = document.getElementById('pane-balcony');
+  const bands = filteredBands();
+  const regions = filteredRegions();
+  const subjects = filteredSubjects();
+  if(!bands.length || !regions.length || !subjects.length) { el.innerHTML='<div class="empty">No data for current selection. Try enabling more filters.</div>'; return; }
+
+  el.innerHTML = `
+  <div class="sec-title">District Balcony View — Grade Bands</div>
+  <div class="sec-sub">MOY Proficiency and Growth by grade band across selected regions. Dashed line = district average.</div>
+  <div class="insight">Showing: <strong>${subjects.join(' & ')}</strong> | Bands: <strong>${bands.join(', ')}</strong> | Regions: <strong>${regions.map(r=>RL[r]).join(', ')}</strong></div>
+  ${subjects.map(s=>`
+  <div style="margin-bottom:1.5rem">
+    <div style="font-size:14px;font-weight:600;color:${s==='Math'?'var(--blue)':'var(--orange)'};margin-bottom:12px">${s}</div>
+    <div class="grid g2">
+      <div class="card"><div class="card-title">MOY Proficiency</div><div class="card-sub">vs. district average (dashed)</div><div class="cw" style="height:240px"><canvas id="balProf_${s}"></canvas></div></div>
+      <div class="card"><div class="card-title">Growth</div><div class="card-sub">vs. district average (dashed)</div><div class="cw" style="height:240px"><canvas id="balGrow_${s}"></canvas></div></div>
+    </div>
+  </div>`).join('')}`;
+
+  subjects.forEach(s=>{
+    const d = BD[s];
+    const bi = bands.map(b=>BANDS.indexOf(b));
+    const profDs = regions.map(r=>({label:RL[r],data:bi.map(i=>d.prof[r][i]),backgroundColor:RA[r],borderColor:RC[r],borderWidth:1.5,borderRadius:3}));
+    profDs.push({label:'District',data:bi.map(i=>d.prof.D[i]),type:'line',borderColor:'#888',borderDash:[5,4],pointRadius:4,backgroundColor:'transparent',borderWidth:1.5});
+    const growDs = regions.map(r=>({label:RL[r],data:bi.map(i=>d.growth[r][i]),backgroundColor:RA[r],borderColor:RC[r],borderWidth:1.5,borderRadius:3}));
+    growDs.push({label:'District',data:bi.map(i=>d.growth.D[i]),type:'line',borderColor:'#888',borderDash:[5,4],pointRadius:4,backgroundColor:'transparent',borderWidth:1.5});
+    mkChart(`balProf_${s}`, barCfg(bands,profDs,{yscale:{ticks:{callback:v=>v+'%'},max:70}}));
+    mkChart(`balGrow_${s}`, barCfg(bands,growDs,{yscale:{ticks:{callback:v=>'+'+v+' pp'},max:33}}));
+  });
+}
+
+// ═══════════════════════ ACCELERATION ═══════════════════════
+function renderAccel() {
+  const el = document.getElementById('pane-accel');
+  const bands = filteredBands();
+  const regions = filteredRegions();
+  const subjects = filteredSubjects();
+  if(!bands.length||!regions.length||!subjects.length){el.innerHTML='<div class="empty">No data for current selection.</div>';return;}
+
+  const bi = bands.map(b=>BANDS.indexOf(b));
+  const allLabels = regions.flatMap(r=>bands.map(b=>`${RL[r]} ${b}`));
+  const allVals   = regions.flatMap(r=>bi.map(i=>({Math:BD.Math.accel[r][i],ELA:BD.ELA.accel[r][i]})));
+
+  el.innerHTML = `
+  <div class="sec-title">Relative Acceleration</div>
+  <div class="sec-sub">Region growth minus district average for same band. Positive = outpacing district; Negative = falling behind.</div>
+  <div class="insight">South leads relative acceleration in secondary grades in both subjects. <strong>Math 9–11: +4.13 pp</strong> — the single largest value in the dataset across all regions, bands, and subjects.</div>
+  ${subjects.map(s=>`
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">${s} — Relative Acceleration by Band</div>
+    <div class="card-sub">South values annotated where applicable</div>
+    <div class="cw" style="height:280px"><canvas id="acc_${s}"></canvas></div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Band</th>${regions.map(r=>`<th>${RL[r]}</th>`).join('')}<th>Dist. Growth</th></tr></thead>
+      <tbody>${bands.map((b,j)=>{
+        const i=bi[j];
+        return `<tr><td>${b}</td>${regions.map(r=>{const v=BD[s].accel[r][i];return `<td style="color:${v>=0?'#15803d':'#b91c1c'};font-weight:${Math.abs(v)>=2?600:400}">${v>=0?'+':''}${v.toFixed(2)} pp</td>`}).join('')}<td style="color:#666">+${BD[s].growth.D[i].toFixed(1)} pp</td></tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`).join('')}`;
+
+  subjects.forEach(s=>{
+    const vals = regions.flatMap(r=>bi.map(i=>BD[s].accel[r][i]));
+    const bgs  = regions.flatMap(r=>bi.map(i=>BD[s].accel[r][i]>=0?RA[r]:'rgba(150,150,150,0.4)'));
+    mkChart(`acc_${s}`, barCfg(allLabels,[{data:vals,backgroundColor:bgs,borderRadius:3}],
+      {yscale:{min:-3,max:5.5,ticks:{callback:v=>(v>=0?'+':'')+v+' pp'}},xtick:{maxRotation:40}}));
+  });
+}
+
+// ═══════════════════════ SBA ═══════════════════════
+function renderSBA() {
+  const el = document.getElementById('pane-sba');
+  const regions = filteredRegions();
+  const subjects = filteredSubjects();
+  const SBA_GRADES_FILTER = ['3','5','8','11'].filter(g=>S.grade.has(g));
+  if(!SBA_GRADES_FILTER.length||!subjects.length||!regions.length){el.innerHTML='<div class="empty">No SBA-grade data for current selection. Enable Grades 3, 5, 8, or 11.</div>';return;}
+  const sbaLabels = SBA_GRADES_FILTER.map(g=>'Gr '+g);
+  const sbaIdx = SBA_GRADES_FILTER.map(g=>['3','5','8','11'].indexOf(g));
+
+  el.innerHTML=`
+  <div class="sec-title">SBA-Tested Grades — 3, 4, 5, 8, 11</div>
+  <div class="sec-sub">iReady–SBA correlation: 70–75% (72.5% midpoint used for estimates). Showing selected grades: ${SBA_GRADES_FILTER.join(', ')}.</div>
+  ${subjects.map(s=>`
+  <div style="margin-bottom:1.5rem">
+    <div style="font-size:14px;font-weight:600;color:${s==='Math'?'var(--blue)':'var(--orange)'};margin-bottom:12px">${s}</div>
+    <div class="grid g3">
+      <div class="card"><div class="card-title">MOY Proficiency</div><div class="card-sub">By region</div><div class="cw" style="height:220px"><canvas id="sbP_${s}"></canvas></div></div>
+      <div class="card"><div class="card-title">Growth BOY→MOY</div><div class="card-sub">By region</div><div class="cw" style="height:220px"><canvas id="sbG_${s}"></canvas></div></div>
+      <div class="card"><div class="card-title">3+ Below at MOY</div><div class="card-sub">Deepest deficit concentration</div><div class="cw" style="height:220px"><canvas id="sbB_${s}"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">Region South — Estimated SBA Proficiency (72.5% correlation)</div>
+      <div class="card-sub">Orange = SBA-tested grades. All selected grades shown.</div>
+      <div class="cw" style="height:200px"><canvas id="sbProxy_${s}"></canvas></div>
+    </div>
+  </div>`).join('')}`;
+
+  subjects.forEach(s=>{
+    const d = SBAD[s];
+    const mkDs = key=>regions.map(r=>({label:RL[r],data:sbaIdx.map(i=>d[key][r][i]),backgroundColor:RA[r],borderColor:RC[r],borderWidth:1.5,borderRadius:3}));
+    mkChart(`sbP_${s}`, barCfg(sbaLabels,mkDs('prof'),{yscale:{ticks:{callback:v=>v+'%'},max:70}}));
+    mkChart(`sbG_${s}`, barCfg(sbaLabels,mkDs('growth'),{yscale:{ticks:{callback:v=>'+'+v+' pp'},max:26}}));
+    mkChart(`sbB_${s}`, barCfg(sbaLabels,mkDs('b3'),{yscale:{ticks:{callback:v=>v+'%'},max:65}}));
+
+    const grades = filteredGrades();
+    const proxyVals = grades.map(g=>PROXY[s][ALL_GRADES.indexOf(g)]);
+    const SBA_TESTED = ['3','4','5','6','7','8','11'];
+    const proxyColors = grades.map(g=>SBA_TESTED.includes(g)?'rgba(232,103,27,.78)':'rgba(0,36,122,.5)');
+    mkChart(`sbProxy_${s}`, barCfg(grades,[{data:proxyVals,backgroundColor:proxyColors,borderRadius:3}],{yscale:{ticks:{callback:v=>v+'%'},max:50}}));
+  });
+}
+
+// ═══════════════════════ SCATTER ═══════════════════════
+function renderScatter() {
+  const el = document.getElementById('pane-scatter');
+  const grades = filteredGrades();
+  const subjects = filteredSubjects();
+  if(!grades.length||!subjects.length){el.innerHTML='<div class="empty">No data for current selection.</div>';return;}
+
+  el.innerHTML=`
+  <div class="sec-title">Growth vs. Proficiency — Scatter Analysis (Region South)</div>
+  <div class="sec-sub"><strong>X axis</strong> = MOY Proficiency (%) &nbsp;|&nbsp; <strong>Y axis</strong> = Growth BOY→MOY (pp) &nbsp;|&nbsp; Dashed lines = within-South medians (not district targets) &nbsp;|&nbsp; Math median: X=27.9% Y=+15.5pp &nbsp;|&nbsp; ELA median: X=32.4% Y=+11.6pp</div>
+  <div class="insight">Quadrants divide at the Region South median for each subject. A grade in the upper-right is above-median in <em>both</em> proficiency and growth — the strongest position. Lower-left = both below median — highest intervention urgency.</div>
+  ${subjects.map(s=>`
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">${s} — Growth vs. Proficiency (Grades: ${grades.join(', ')})</div>
+    <div class="card-sub">Hover points for details. Point labels show grade level.</div>
+    <div class="cw" style="height:420px"><canvas id="sc_${s}"></canvas></div>
+    <div style="font-size:11px;color:var(--g400);margin-top:8px;font-style:italic">Upper-left: Low proficiency / High growth &nbsp;|&nbsp; Upper-right: High proficiency / High growth &nbsp;|&nbsp; Lower-left: Low proficiency / Low growth &nbsp;|&nbsp; Lower-right: High proficiency / Low growth</div>
+  </div>`).join('')}`;
+
+  subjects.forEach(s=>{
+    const color   = s==='Math'?'rgba(0,36,122,.72)':'rgba(232,103,27,.72)';
+    const border  = s==='Math'?'#00247a':'#E8671B';
+    const medX = MEDIANS[s].x, medY = MEDIANS[s].y;
+    const pts = grades.map(g=>{
+      const i=ALL_GRADES.indexOf(g);
+      const moy = +(SD[s].MOY.ma[i]+SD[s].MOY.eo[i]).toFixed(1);
+      const gr  = +(moy - (SD[s].BOY.ma[i]+SD[s].BOY.eo[i])).toFixed(1);
+      return {x:moy,y:gr,grade:g};
+    });
+
+    const quadPlugin={id:'q'+s,beforeDraw(chart){
+      const{ctx:c,chartArea:{left,right,top,bottom},scales:{x,y}}=chart;
+      const mx=x.getPixelForValue(medX),my=y.getPixelForValue(medY);
+      [{x1:left,x2:mx,y1:top,y2:my,col:'rgba(0,36,122,.04)'},{x1:mx,x2:right,y1:top,y2:my,col:'rgba(0,36,122,.07)'},
+       {x1:left,x2:mx,y1:my,y2:bottom,col:'rgba(200,60,60,.04)'},{x1:mx,x2:right,y1:my,y2:bottom,col:'rgba(200,60,60,.06)'}
+      ].forEach(q=>{c.fillStyle=q.col;c.fillRect(q.x1,q.y1,q.x2-q.x1,q.y2-q.y1)});
+      c.save();c.setLineDash([5,4]);c.strokeStyle='rgba(128,128,128,.4)';c.lineWidth=1;
+      c.beginPath();c.moveTo(mx,top);c.lineTo(mx,bottom);c.stroke();
+      c.beginPath();c.moveTo(left,my);c.lineTo(right,my);c.stroke();
+      c.restore();
+    }};
+    const labelPlugin={id:'l'+s,afterDatasetsDraw(chart){
+      const{ctx:c}=chart;
+      chart.getDatasetMeta(0).data.forEach((pt,i)=>{
+        c.fillStyle=border;c.font='600 10px DM Sans,sans-serif';c.textAlign='center';
+        c.fillText('G'+pts[i].grade,pt.x,pt.y-13);
+      });
+    }};
+
+    dc('sc_'+s);
+    const ctx = document.getElementById('sc_'+s).getContext('2d');
+    CH['sc_'+s]=new Chart(ctx,{type:'scatter',data:{datasets:[{label:s,data:pts,backgroundColor:color,borderColor:border,borderWidth:1.5,pointRadius:9,pointHoverRadius:12}]},
+      plugins:[quadPlugin,labelPlugin],
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18,right:18}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Grade ${c.raw.grade}: ${c.raw.x.toFixed(1)}% proficiency | +${c.raw.y.toFixed(1)} pp growth`}}},
+        scales:{x:{min:0,max:70,title:{display:true,text:'MOY Proficiency (%)',font:{size:11},color:'#666'},ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+                y:{min:0,max:50,title:{display:true,text:'Growth BOY→MOY (pp)',font:{size:11},color:'#666'},ticks:{callback:v=>'+'+v+' pp',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}}}}});
+  });
+}
+
+// ═══════════════════════ GRADE DETAIL ═══════════════════════
+function renderGradeDetail() {
+  const el = document.getElementById('pane-gradedetail');
+  const grades = filteredGrades();
+  const subjects = filteredSubjects();
+  if(!grades.length||!subjects.length){el.innerHTML='<div class="empty">No data for current selection.</div>';return;}
+
+  el.innerHTML=`
+  <div class="sec-title">Grade-Level Detail — Region South</div>
+  <div class="sec-sub">BOY and MOY proficiency by grade for selected subjects. Grades shown: ${grades.join(', ')}.</div>
+  ${subjects.map(s=>`
+  <div style="margin-bottom:2rem">
+    <div style="font-size:14px;font-weight:600;color:${s==='Math'?'var(--blue)':'var(--orange)'};margin-bottom:12px">${s}</div>
+    <div class="grid g2">
+      <div class="card"><div class="card-title">Proficiency: BOY vs. MOY</div><div class="card-sub">Gray = BOY base, color = growth gained</div><div class="cw" style="height:280px"><canvas id="gd_prof_${s}"></canvas></div></div>
+      <div class="card"><div class="card-title">Growth by Grade</div><div class="card-sub">BOY→MOY pp; highlighted bars = above 15 pp</div><div class="cw" style="height:280px"><canvas id="gd_grow_${s}"></canvas></div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Grade</th><th>BOY Prof.</th><th>MOY Prof.</th><th>Growth</th><th>Mid or Above</th><th>Early On</th><th>2 Below (MOY)</th><th>3+ Below (MOY)</th></tr></thead>
+      <tbody>${grades.map(g=>{
+        const i=ALL_GRADES.indexOf(g);
+        const boy=+(SD[s].BOY.ma[i]+SD[s].BOY.eo[i]).toFixed(1);
+        const moy=+(SD[s].MOY.ma[i]+SD[s].MOY.eo[i]).toFixed(1);
+        const grow=+(moy-boy).toFixed(1);
+        const cls=grow>=15?'tg':grow<10?'tr':'';
+        return `<tr><td>${g}</td><td>${boy.toFixed(1)}%</td><td>${moy.toFixed(1)}%</td><td class="${cls}">${grow>=0?'+':''}${grow.toFixed(1)} pp</td><td>${SD[s].MOY.ma[i].toFixed(1)}%</td><td>${SD[s].MOY.eo[i].toFixed(1)}%</td><td>${SD[s].MOY.b2[i].toFixed(1)}%</td><td>${SD[s].MOY.b3[i].toFixed(1)}%</td></tr>`;
+      }).join('')}</tbody></table>
+    </div>
+  </div>`).join('')}`;
+
+  subjects.forEach(s=>{
+    const color=s==='Math'?'rgba(0,36,122,.75)':'rgba(232,103,27,.75)';
+    const border=s==='Math'?'#00247a':'#E8671B';
+    const boy = profArr(s,'BOY',grades);
+    const moy = profArr(s,'MOY',grades);
+    const grow= grades.map((_,i)=>+(moy[i]-boy[i]).toFixed(1));
+    mkChart(`gd_prof_${s}`,{type:'bar',data:{labels:grades,datasets:[
+      {label:'BOY',data:boy,backgroundColor:'rgba(180,180,180,.5)',borderColor:'#bbb',borderWidth:1,borderRadius:2,stack:'s'},
+      {label:'Growth',data:grow,backgroundColor:color,borderColor:border,borderWidth:1,borderRadius:2,stack:'s'},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?`BOY: ${c.raw}%`:`Growth: +${c.raw} pp | MOY: ${moy[c.dataIndex]}%`}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,max:75,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}}}}});
+    const growColors = grow.map(v=>v>=15?color:'rgba(180,180,180,.55)');
+    mkChart(`gd_grow_${s}`,barCfg(grades,[{data:grow,backgroundColor:growColors,borderRadius:3}],
+      {yscale:{ticks:{callback:v=>'+'+v+' pp'},min:0,max:50}}));
+  });
+}
+
+// ═══════════════════════ PLACEMENT TIERS ═══════════════════════
+function renderPlacement() {
+  const el = document.getElementById('pane-placement');
+  const grades = filteredGrades();
+  const subjects = filteredSubjects();
+  const windows  = Array.from(S.window);
+  if(!grades.length||!subjects.length||!windows.length){el.innerHTML='<div class="empty">No data for current selection.</div>';return;}
+
+  el.innerHTML=`
+  <div class="sec-title">Placement Tier Distribution — Region South</div>
+  <div class="sec-sub">Full breakdown across all five placement categories. Green = proficiency (Early On + Mid or Above). Red = deepest deficit.</div>
+  ${subjects.map(s=>windows.map(w=>`
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">${s} — ${w} Placement Distribution (Grades: ${grades.join(', ')})</div>
+    <div class="card-sub">Stacked 100%. Each bar = one grade level.</div>
+    <div class="cw" style="height:320px"><canvas id="pl_${s}_${w}"></canvas></div>
+  </div>`).join('')).join('')}`;
+
+  subjects.forEach(s=>{
+    windows.forEach(w=>{
+      const d = SD[s][w];
+      const idx = grades.map(g=>ALL_GRADES.indexOf(g));
+      mkChart(`pl_${s}_${w}`,{type:'bar',data:{labels:grades,datasets:[
+        {label:'Mid or Above',data:idx.map(i=>d.ma[i]),backgroundColor:'#15803d',stack:'s'},
+        {label:'Early On',    data:idx.map(i=>d.eo[i]),backgroundColor:'#86efac',stack:'s'},
+        {label:'1 Below',     data:idx.map(i=>d.b1[i]),backgroundColor:'#fbbf24',stack:'s'},
+        {label:'2 Below',     data:idx.map(i=>d.b2[i]),backgroundColor:'#f97316',stack:'s'},
+        {label:'3+ Below',    data:idx.map(i=>d.b3[i]),backgroundColor:'#dc2626',stack:'s'},
+      ]},options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12,padding:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(1)}%`}}},
+        scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}}}}});
+    });
+  });
+}
+
+// INIT
+render();
+</script>
+</body>
+</html>
