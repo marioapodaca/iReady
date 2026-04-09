@@ -351,10 +351,15 @@ function renderOverview() {
   const windows = Array.from(S.window);
 
   // Compute aggregated metrics for Region South in filtered selection
+  // Values are already in percentage form (0-100 scale) — just average them
   let totalBOY=0,totalMOY=0,cnt=0;
-  subjects.forEach(s=>{ grades.forEach(g=>{ const i=ALL_GRADES.indexOf(g); totalBOY+=SD[s].BOY.ma[i]+SD[s].BOY.eo[i]; totalMOY+=SD[s].MOY.ma[i]+SD[s].MOY.eo[i]; cnt++; }); });
-  const avgBOY = cnt?+(totalBOY/cnt*100).toFixed(1):0;
-  const avgMOY = cnt?+(totalMOY/cnt*100).toFixed(1):0;
+  subjects.forEach(s=>{ grades.forEach(g=>{ const i=ALL_GRADES.indexOf(g);
+    totalBOY += SD[s].BOY.ma[i]+SD[s].BOY.eo[i];
+    totalMOY += SD[s].MOY.ma[i]+SD[s].MOY.eo[i];
+    cnt++;
+  }); });
+  const avgBOY = cnt ? +(totalBOY/cnt).toFixed(1) : 0;
+  const avgMOY = cnt ? +(totalMOY/cnt).toFixed(1) : 0;
   const growth = +(avgMOY-avgBOY).toFixed(1);
 
   el.innerHTML = `
